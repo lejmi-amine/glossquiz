@@ -1,4 +1,4 @@
-const questionsBank = require('./questions');
+const questionsBank = require("./questions");
 
 const TOTAL_QUESTIONS = 20;
 const TIME_LIMIT = 15;
@@ -16,9 +16,10 @@ const rooms = new Map();
 let hallOfFame = [];
 
 function randomRoomId(length = 8) {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
-  let id = '';
-  for (let i = 0; i < length; i += 1) id += chars[Math.floor(Math.random() * chars.length)];
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
+  let id = "";
+  for (let i = 0; i < length; i += 1)
+    id += chars[Math.floor(Math.random() * chars.length)];
   return id;
 }
 
@@ -38,8 +39,11 @@ function fisherYates(items) {
 }
 
 function sanitizeName(name) {
-  const clean = String(name || '').trim().replace(/\s+/g, ' ').slice(0, 24);
-  return clean || 'Glam Player';
+  const clean = String(name || "")
+    .trim()
+    .replace(/\s+/g, " ")
+    .slice(0, 24);
+  return clean || "Glam Player";
 }
 
 function publicPlayer(player) {
@@ -62,10 +66,18 @@ function createRoom(roomId, io) {
       2: null,
     },
     hostId: 1,
-    status: 'lobby',
+    status: "lobby",
     options: {
-      difficulty: 'mixed',
-      categories: ['makeup', 'logos_fashion', 'accessories', 'skincare', 'nails', 'logos_tech', 'wildcard'],
+      difficulty: "mixed",
+      categories: [
+        "makeup",
+        "logos_fashion",
+        "accessories",
+        "skincare",
+        "nails",
+        "logos_tech",
+        "wildcard",
+      ],
     },
     questions: [],
     currentQuestionIndex: -1,
@@ -127,7 +139,11 @@ function assignPlayer(room, socket, name, savedPlayerId) {
 
   if ([1, 2].includes(requestedId) && room.players[requestedId]) {
     const existing = room.players[requestedId];
-    if (!existing.connected || existing.socketId === socket.id || existing.name === playerName) {
+    if (
+      !existing.connected ||
+      existing.socketId === socket.id ||
+      existing.name === playerName
+    ) {
       existing.socketId = socket.id;
       existing.connected = true;
       existing.name = playerName;
@@ -136,7 +152,12 @@ function assignPlayer(room, socket, name, savedPlayerId) {
     }
   }
 
-  const sameNameDisconnected = [1, 2].find((slot) => room.players[slot] && !room.players[slot].connected && room.players[slot].name === playerName);
+  const sameNameDisconnected = [1, 2].find(
+    (slot) =>
+      room.players[slot] &&
+      !room.players[slot].connected &&
+      room.players[slot].name === playerName,
+  );
   if (sameNameDisconnected) {
     const existing = room.players[sameNameDisconnected];
     existing.socketId = socket.id;
@@ -145,7 +166,9 @@ function assignPlayer(room, socket, name, savedPlayerId) {
     return existing;
   }
 
-  const existingSocketSlot = [1, 2].find((slot) => room.players[slot] && room.players[slot].socketId === socket.id);
+  const existingSocketSlot = [1, 2].find(
+    (slot) => room.players[slot] && room.players[slot].socketId === socket.id,
+  );
   if (existingSocketSlot) {
     room.players[existingSocketSlot].name = playerName;
     return room.players[existingSocketSlot];
@@ -184,23 +207,77 @@ function prepareCategoryStats(room) {
   });
 }
 
+const CATEGORY_IMAGE_QUERIES = {
+  makeup: "makeup product",
+  logos_fashion: "fashion logo",
+  accessories: "fashion accessories",
+  skincare: "skincare product",
+  nails: "manicure nails",
+  logos_tech: "technology logo",
+  wildcard: "beauty product",
+};
+
+const QUESTION_KEYWORD_QUERIES = [
+  { pattern: /mascara|eyeliner|lash/i, query: "mascara" },
+  { pattern: /lipstick|lip gloss|lip liner|lip/i, query: "lipstick" },
+  {
+    pattern: /foundation|primer|concealer|powder/i,
+    query: "foundation makeup",
+  },
+  { pattern: /eyeshadow|palette|brows/i, query: "eyeshadow palette" },
+  { pattern: /blush|bronzer|highlighter/i, query: "blush" },
+  { pattern: /nail|manicure|polish|acrylic/i, query: "nail polish" },
+  {
+    pattern: /skincare|serum|sunscreen|moisturizer/i,
+    query: "skincare product",
+  },
+  { pattern: /logo|brand|monogram|fashion house/i, query: "fashion logo" },
+  { pattern: /technology|tech|GPU|smartphone/i, query: "tech logo" },
+];
+
+function getQuestionImageUrl(question) {
+  const text = question.question || "";
+  const keywordMatch = QUESTION_KEYWORD_QUERIES.find((entry) =>
+    entry.pattern.test(text),
+  );
+  const query =
+    keywordMatch?.query ||
+    CATEGORY_IMAGE_QUERIES[question.category] ||
+    question.category;
+  return `https://source.unsplash.com/840x260/?${encodeURIComponent(query)}`;
+}
+
 function selectQuestions(options) {
-  const categories = options.categories && options.categories.length ? options.categories : ['wildcard'];
+  const categories =
+    options.categories && options.categories.length
+      ? options.categories
+      : ["wildcard"];
   let pool = questionsBank.filter((q) => categories.includes(q.category));
-  if (options.difficulty && options.difficulty !== 'mixed') {
+  if (options.difficulty && options.difficulty !== "mixed") {
     pool = pool.filter((q) => q.difficulty === options.difficulty);
   }
   if (pool.length < TOTAL_QUESTIONS) {
     let fallback = questionsBank.filter((q) => categories.includes(q.category));
     if (fallback.length < TOTAL_QUESTIONS) fallback = questionsBank;
-    pool = [...pool, ...fallback.filter((q) => !pool.some((p) => p.id === q.id))];
+    pool = [
+      ...pool,
+      ...fallback.filter((q) => !pool.some((p) => p.id === q.id)),
+    ];
   }
-  return fisherYates(pool).slice(0, TOTAL_QUESTIONS);
+
+  return fisherYates(pool)
+    .slice(0, TOTAL_QUESTIONS)
+    .map((question) => ({
+      ...question,
+      image: getQuestionImageUrl(question),
+    }));
 }
 
 function startGame(room) {
   if (!bothPlayersPresent(room)) {
-    emitRoom(room, 'error', { message: 'You need two players before starting.' });
+    emitRoom(room, "error", {
+      message: "You need two players before starting.",
+    });
     return false;
   }
 
@@ -208,7 +285,7 @@ function startGame(room) {
   clearTimeout(room.reconnectTimer);
   clearInterval(room.timer);
   room.reconnectDeadline = null;
-  room.status = 'playing';
+  room.status = "playing";
   room.currentQuestionIndex = -1;
   room.currentAnswers = {};
   room.revealLocked = false;
@@ -217,7 +294,7 @@ function startGame(room) {
   resetPlayerForGame(room.players[2]);
   prepareCategoryStats(room);
 
-  emitRoom(room, 'game_start', {
+  emitRoom(room, "game_start", {
     difficulty: room.options.difficulty,
     categories: room.options.categories,
     totalQuestions: TOTAL_QUESTIONS,
@@ -247,7 +324,7 @@ function sendNextQuestion(room) {
   room.players[1].answerLocked = false;
   room.players[2].answerLocked = false;
 
-  emitRoom(room, 'question', {
+  emitRoom(room, "question", {
     questionIndex: room.currentQuestionIndex,
     total: TOTAL_QUESTIONS,
     question: q.question,
@@ -260,38 +337,48 @@ function sendNextQuestion(room) {
       player2: publicPlayer(room.players[2]),
     },
   });
-  emitRoom(room, 'tick', { timeLeft: room.timeLeft });
+  emitRoom(room, "tick", { timeLeft: room.timeLeft });
 
   room.timer = setInterval(() => {
-    if (room.status !== 'playing') return;
+    if (room.status !== "playing") return;
     room.timeLeft -= 1;
-    emitRoom(room, 'tick', { timeLeft: Math.max(room.timeLeft, 0) });
-    if (room.timeLeft <= 0) revealAnswer(room, 'time_up');
+    emitRoom(room, "tick", { timeLeft: Math.max(room.timeLeft, 0) });
+    if (room.timeLeft <= 0) revealAnswer(room, "time_up");
   }, 1000);
 }
 
 function calculatePoints(questionDifficulty, timeLeft, correct) {
   if (!correct) return 0;
   const base = BASE_POINTS[questionDifficulty] || 100;
-  return Math.max(10, Math.round(base * (Math.max(0, Math.min(TIME_LIMIT, Number(timeLeft) || 0)) / TIME_LIMIT)));
+  return Math.max(
+    10,
+    Math.round(
+      base *
+        (Math.max(0, Math.min(TIME_LIMIT, Number(timeLeft) || 0)) / TIME_LIMIT),
+    ),
+  );
 }
 
 function playerAnswer(room, playerId, questionIndex, optionKey, timeLeft) {
-  if (!room || room.status !== 'playing' || room.revealLocked) return;
+  if (!room || room.status !== "playing" || room.revealLocked) return;
   if (questionIndex !== room.currentQuestionIndex) return;
   if (![1, 2].includes(Number(playerId))) return;
   if (room.currentAnswers[playerId]) return;
 
-  const cleanOption = String(optionKey || '').toUpperCase();
-  if (!['A', 'B', 'C', 'D'].includes(cleanOption)) return;
+  const cleanOption = String(optionKey || "").toUpperCase();
+  if (!["A", "B", "C", "D"].includes(cleanOption)) return;
 
   room.currentAnswers[playerId] = {
     answer: cleanOption,
-    timeLeft: Math.max(0, Math.min(TIME_LIMIT, Number(timeLeft) || room.timeLeft)),
+    timeLeft: Math.max(
+      0,
+      Math.min(TIME_LIMIT, Number(timeLeft) || room.timeLeft),
+    ),
   };
   if (room.players[playerId]) room.players[playerId].answerLocked = true;
 
-  if (room.currentAnswers[1] && room.currentAnswers[2]) revealAnswer(room, 'both_answered');
+  if (room.currentAnswers[1] && room.currentAnswers[2])
+    revealAnswer(room, "both_answered");
 }
 
 function buildRevealPayload(room) {
@@ -349,7 +436,7 @@ function revealAnswer(room, eventName) {
       p.score += 150;
       payload[`player${id}`].score = p.score;
       payload.scores[`player${id}`] = publicPlayer(p);
-      emitRoom(room, 'streak_bonus', {
+      emitRoom(room, "streak_bonus", {
         playerId: id,
         bonusPoints: 150,
         streakCount: p.streak,
@@ -359,22 +446,24 @@ function revealAnswer(room, eventName) {
   });
 
   setTimeout(() => {
-    if (room.status !== 'playing') return;
-    emitRoom(room, 'next_question');
+    if (room.status !== "playing") return;
+    emitRoom(room, "next_question");
     sendNextQuestion(room);
   }, REVEAL_DELAY_MS);
 }
 
 function finishGame(room) {
   clearInterval(room.timer);
-  room.status = 'ended';
+  room.status = "ended";
   room.endedAt = Date.now();
 
   const p1 = room.players[1];
   const p2 = room.players[2];
   let winner = null;
-  if (p1.score > p2.score) winner = { playerId: 1, playerName: p1.name, score: p1.score };
-  if (p2.score > p1.score) winner = { playerId: 2, playerName: p2.name, score: p2.score };
+  if (p1.score > p2.score)
+    winner = { playerId: 1, playerName: p1.name, score: p1.score };
+  if (p2.score > p1.score)
+    winner = { playerId: 2, playerName: p2.name, score: p2.score };
 
   [p1, p2].forEach((p) => {
     hallOfFame.push({
@@ -386,7 +475,7 @@ function finishGame(room) {
   });
   hallOfFame = hallOfFame.sort((a, b) => b.score - a.score).slice(0, 10);
 
-  emitRoom(room, 'game_over', {
+  emitRoom(room, "game_over", {
     winner,
     scores: {
       player1: publicPlayer(p1),
@@ -401,15 +490,28 @@ function finishGame(room) {
 
 function setOptions(room, playerId, options) {
   if (Number(playerId) !== 1) {
-    return { ok: false, message: 'Only the host can change game options.' };
+    return { ok: false, message: "Only the host can change game options." };
   }
-  if (room.status !== 'lobby' && room.status !== 'ended') {
-    return { ok: false, message: 'Options can only be changed before a game starts.' };
+  if (room.status !== "lobby" && room.status !== "ended") {
+    return {
+      ok: false,
+      message: "Options can only be changed before a game starts.",
+    };
   }
 
-  const allowedDifficulties = ['easy', 'medium', 'hard', 'mixed'];
-  const allowedCategories = ['makeup', 'logos_fashion', 'accessories', 'skincare', 'nails', 'logos_tech', 'wildcard'];
-  const difficulty = allowedDifficulties.includes(options.difficulty) ? options.difficulty : 'mixed';
+  const allowedDifficulties = ["easy", "medium", "hard", "mixed"];
+  const allowedCategories = [
+    "makeup",
+    "logos_fashion",
+    "accessories",
+    "skincare",
+    "nails",
+    "logos_tech",
+    "wildcard",
+  ];
+  const difficulty = allowedDifficulties.includes(options.difficulty)
+    ? options.difficulty
+    : "mixed";
   const categories = Array.isArray(options.categories)
     ? options.categories.filter((cat) => allowedCategories.includes(cat))
     : allowedCategories;
@@ -418,7 +520,7 @@ function setOptions(room, playerId, options) {
     difficulty,
     categories: categories.length ? categories : allowedCategories,
   };
-  emitRoom(room, 'options_updated', room.options);
+  emitRoom(room, "options_updated", room.options);
   return { ok: true };
 }
 
@@ -438,25 +540,30 @@ function handleDisconnect(socket) {
     return;
   }
 
-  socket.to(room.id).emit('player_disconnected', { playerName: player.name });
+  socket.to(room.id).emit("player_disconnected", { playerName: player.name });
 
-  if (room.status === 'playing') {
-    room.status = 'paused';
+  if (room.status === "playing") {
+    room.status = "paused";
     clearInterval(room.timer);
     room.reconnectDeadline = Date.now() + RECONNECT_TIMEOUT_MS;
     clearTimeout(room.reconnectTimer);
     room.reconnectTimer = setTimeout(() => {
       const freshRoom = rooms.get(room.id);
       if (!freshRoom) return;
-      const stillAway = freshRoom.players[playerId] && !freshRoom.players[playerId].connected;
+      const stillAway =
+        freshRoom.players[playerId] && !freshRoom.players[playerId].connected;
       if (stillAway) {
-        freshRoom.status = 'ended';
-        emitRoom(freshRoom, 'game_over', {
+        freshRoom.status = "ended";
+        emitRoom(freshRoom, "game_over", {
           winner: null,
           opponentLeft: true,
           scores: {
-            player1: freshRoom.players[1] ? publicPlayer(freshRoom.players[1]) : null,
-            player2: freshRoom.players[2] ? publicPlayer(freshRoom.players[2]) : null,
+            player1: freshRoom.players[1]
+              ? publicPlayer(freshRoom.players[1])
+              : null,
+            player2: freshRoom.players[2]
+              ? publicPlayer(freshRoom.players[2])
+              : null,
           },
           categoryStats: freshRoom.categoryStats,
           hallOfFame,
@@ -468,23 +575,23 @@ function handleDisconnect(socket) {
 }
 
 function resumeIfReconnected(room) {
-  if (room.status !== 'paused' || !bothPlayersPresent(room)) return;
+  if (room.status !== "paused" || !bothPlayersPresent(room)) return;
   if (!room.players[1].connected || !room.players[2].connected) return;
   clearTimeout(room.reconnectTimer);
   room.reconnectDeadline = null;
-  room.status = 'playing';
-  emitRoom(room, 'opponent_reconnected', {
+  room.status = "playing";
+  emitRoom(room, "opponent_reconnected", {
     players: {
       player1: publicPlayer(room.players[1]),
       player2: publicPlayer(room.players[2]),
     },
   });
-  emitRoom(room, 'tick', { timeLeft: room.timeLeft });
+  emitRoom(room, "tick", { timeLeft: room.timeLeft });
   room.timer = setInterval(() => {
-    if (room.status !== 'playing') return;
+    if (room.status !== "playing") return;
     room.timeLeft -= 1;
-    emitRoom(room, 'tick', { timeLeft: Math.max(room.timeLeft, 0) });
-    if (room.timeLeft <= 0) revealAnswer(room, 'time_up');
+    emitRoom(room, "tick", { timeLeft: Math.max(room.timeLeft, 0) });
+    if (room.timeLeft <= 0) revealAnswer(room, "time_up");
   }, 1000);
 }
 
@@ -501,7 +608,10 @@ function getCurrentState(room, playerId) {
     waitingForOpponent: !bothPlayersPresent(room),
   };
 
-  if ((room.status === 'playing' || room.status === 'paused') && room.currentQuestionIndex >= 0) {
+  if (
+    (room.status === "playing" || room.status === "paused") &&
+    room.currentQuestionIndex >= 0
+  ) {
     const q = room.questions[room.currentQuestionIndex];
     return {
       ...base,
@@ -516,7 +626,9 @@ function getCurrentState(room, playerId) {
       },
       timeLeft: room.timeLeft,
       answers: room.currentAnswers,
-      reconnectSecondsLeft: room.reconnectDeadline ? Math.max(0, Math.ceil((room.reconnectDeadline - Date.now()) / 1000)) : null,
+      reconnectSecondsLeft: room.reconnectDeadline
+        ? Math.max(0, Math.ceil((room.reconnectDeadline - Date.now()) / 1000))
+        : null,
     };
   }
   return base;
