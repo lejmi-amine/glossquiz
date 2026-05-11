@@ -328,6 +328,7 @@ function sendNextQuestion(room) {
     questionIndex: room.currentQuestionIndex,
     total: TOTAL_QUESTIONS,
     question: q.question,
+    image: q.image,
     options: q.options,
     category: q.category,
     difficulty: q.difficulty,

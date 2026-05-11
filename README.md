@@ -2,7 +2,7 @@
 
 GlossQuiz is a complete real-time 2-player multiplayer quiz web app with a Node.js + Express + Socket.io backend and a vanilla HTML/CSS/JS frontend.
 
-It includes private 8-character room links, synchronized 15-second server-side timers, player reconnect handling, streak bonuses, rematches, Hall of Fame, responsive glam styling, and 175 built-in questions across 7 categories.
+It includes private 8-character room links, synchronized 15-second server-side timers, player reconnect handling, streak bonuses, rematches, Hall of Fame, polished glam styling, image-backed quiz cards, and 175 built-in questions across 7 categories.
 
 ## Project structure
 
@@ -106,6 +106,8 @@ For your real Vercel domain, either replace `https://glossquiz.vercel.app` in `s
 CLIENT_URL=https://your-real-vercel-url.vercel.app
 ```
 
+This is also helpful when frontend and backend are deployed on separate domains and CORS needs to allow your real production host.
+
 ## Deploy both backend and frontend on Railway as one app
 
 The Express server serves the `client` folder automatically. You can deploy only the backend on Railway and use Railway as the full app host.
@@ -121,7 +123,10 @@ Then open the Railway URL directly. The client is now configured to default to t
 If you deploy the frontend and backend separately, set this in `client/app.js` or via `window.GLOSSQUIZ_SOCKET_URL` in your HTML:
 
 ```js
-const SOCKET_URL = window.GLOSSQUIZ_SOCKET_URL || window.location.origin;
+const SOCKET_URL =
+  window.GLOSSQUIZ_SOCKET_URL ||
+  window.location.origin ||
+  "https://your-backend-url.example.com";
 ```
 
 If your backend is on a separate domain, set `CLIENT_URL` in the backend environment to your frontend URL so CORS works correctly.

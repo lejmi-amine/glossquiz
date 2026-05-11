@@ -1,6 +1,8 @@
 /* global io */
 const SOCKET_URL =
-  window.GLOSSQUIZ_SOCKET_URL || "https://glossquiz-server.onrender.com";
+  window.GLOSSQUIZ_SOCKET_URL ||
+  window.location.origin ||
+  "https://glossquiz-server.onrender.com";
 
 const CATEGORIES = [
   "makeup",
@@ -24,6 +26,7 @@ const state = {
   hallOfFame: [],
   disconnectInterval: null,
 };
+let toastTimer = null;
 
 const $ = (id) => document.getElementById(id);
 const screens = {
@@ -43,7 +46,8 @@ function showToast(message) {
   const toast = $("toast");
   toast.textContent = message;
   toast.classList.remove("hidden");
-  setTimeout(() => toast.classList.add("hidden"), 2600);
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.add("hidden"), 2600);
 }
 
 function generateRoomId() {
@@ -333,14 +337,22 @@ function renderQuestion(q) {
 
   const questionImage = $("question-image");
   const questionText = $("question-text");
-  questionImage.src = getQuestionImageUrl(q);
+  const primaryImage = q.image || getQuestionImageUrl(q);
+  const fallbackImage = generateQuestionImageSrc(q.question || "Quiz question");
+
+  questionImage.src = primaryImage;
   questionImage.alt = q.question || "Quiz question image";
+  questionImage.loading = "lazy";
   questionImage.classList.remove("hidden");
-  questionText.classList.add("hidden");
+  questionText.textContent = q.question;
+  questionText.classList.remove("hidden");
   questionImage.onerror = () => {
-    questionImage.classList.add("hidden");
-    questionText.textContent = q.question;
-    questionText.classList.remove("hidden");
+    if (questionImage.src !== fallbackImage) {
+      questionImage.src = fallbackImage;
+      questionImage.onerror = () => questionImage.classList.add("hidden");
+    } else {
+      questionImage.classList.add("hidden");
+    }
   };
 
   const grid = $("answers-grid");
