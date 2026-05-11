@@ -71,6 +71,57 @@ function saveSession() {
   );
 }
 
+const questionCanvas = document.createElement("canvas");
+
+function wrapText(text, maxWidth, ctx) {
+  const words = text.split(" ");
+  const lines = [];
+  let current = "";
+
+  words.forEach((word) => {
+    const testLine = current ? `${current} ${word}` : word;
+    const { width } = ctx.measureText(testLine);
+    if (width > maxWidth && current) {
+      lines.push(current);
+      current = word;
+    } else {
+      current = testLine;
+    }
+  });
+
+  if (current) lines.push(current);
+  return lines;
+}
+
+function generateQuestionImageSrc(text) {
+  const width = 840;
+  const height = 260;
+  questionCanvas.width = width;
+  questionCanvas.height = height;
+  const ctx = questionCanvas.getContext("2d");
+
+  ctx.fillStyle = "#fff8f6";
+  ctx.fillRect(0, 0, width, height);
+  ctx.strokeStyle = "rgba(232, 201, 106, 0.45)";
+  ctx.lineWidth = 6;
+  ctx.strokeRect(12, 12, width - 24, height - 24);
+
+  ctx.fillStyle = "#3b1a2a";
+  ctx.font = "700 26px Poppins, sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+
+  const lines = wrapText(text, width - 80, ctx);
+  const lineHeight = 36;
+  const startY = height / 2 - ((lines.length - 1) * lineHeight) / 2;
+
+  lines.forEach((line, index) => {
+    ctx.fillText(line, width / 2, startY + index * lineHeight);
+  });
+
+  return questionCanvas.toDataURL("image/png");
+}
+
 function getSavedSession(roomId) {
   try {
     return JSON.parse(localStorage.getItem(savedKey(roomId)) || "{}");
@@ -260,10 +311,23 @@ function renderQuestion(q) {
   $("category-badge").textContent = q.category.replace("_", " ");
   $("difficulty-badge").textContent = q.difficulty;
   $("counter-badge").textContent = `Q ${q.questionIndex + 1} / ${q.total}`;
-  $("question-text").textContent = q.question;
   $("lock-status").textContent = "Choose your answer.";
   $("thinking-status").textContent = "Opponent is thinking...";
   updateTimer(q.timeLimit, q.timeLimit);
+
+  const questionImage = $("question-image");
+  const questionText = $("question-text");
+  if (q.image) {
+    questionImage.src = q.image;
+    questionImage.alt = q.question || "Quiz question image";
+    questionImage.classList.remove("hidden");
+    questionText.classList.add("hidden");
+  } else {
+    questionImage.src = generateQuestionImageSrc(q.question);
+    questionImage.alt = q.question;
+    questionImage.classList.remove("hidden");
+    questionText.classList.add("hidden");
+  }
 
   const grid = $("answers-grid");
   grid.innerHTML = "";

@@ -1,172 +1,246 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>GlossQuiz ✦</title>
-  <meta name="description" content="GlossQuiz is a real-time 2-player glam trivia showdown." />
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/style.css" />
-</head>
-<body>
-  <div class="sparkle-field" aria-hidden="true">
-    <span></span><span></span><span></span><span></span><span></span><span></span>
-  </div>
-
-  <main id="app" class="app-shell">
-    <section id="home-screen" class="screen active home-screen">
-      <div class="hero-card glam-card">
-        <p class="eyebrow">Real-time 2-player quiz</p>
-        <h1>GlossQuiz ✦</h1>
-        <p class="tagline">The ultimate glam trivia showdown</p>
-        <div class="button-row">
-          <button id="create-game-btn" class="btn btn-primary">Create a game</button>
-          <button id="hall-btn" class="btn btn-secondary">Hall of Fame</button>
-        </div>
-        <p id="home-error" class="soft-error hidden"></p>
-      </div>
-    </section>
-
-    <section id="lobby-screen" class="screen lobby-screen">
-      <div class="glam-card lobby-card">
-        <button class="ghost-back" data-home>← Back</button>
-        <p class="eyebrow">Private room</p>
-        <h2>Get ready to glow ✦</h2>
-
-        <form id="name-form" class="name-form">
-          <label for="name-input">Enter your name</label>
-          <div class="inline-form">
-            <input id="name-input" type="text" maxlength="24" placeholder="e.g. Amine" autocomplete="name" required />
-            <button class="btn btn-primary" type="submit">Join</button>
-          </div>
-        </form>
-
-        <div id="lobby-after-name" class="hidden">
-          <div class="share-box">
-            <p>Share this link with your player 2:</p>
-            <div class="copy-row">
-              <input id="share-link" readonly />
-              <button id="copy-link-btn" class="btn btn-secondary" type="button">Copy</button>
-            </div>
-          </div>
-
-          <div id="waiting-card" class="waiting-card">
-            <div class="sparkle-loader"><i></i><i></i><i></i></div>
-            <p id="waiting-text">Waiting for opponent...</p>
-          </div>
-
-          <div id="host-options" class="host-options hidden">
-            <h3>Game options</h3>
-            <div class="field-group">
-              <label for="difficulty-select">Difficulty</label>
-              <select id="difficulty-select">
-                <option value="easy">Easy</option>
-                <option value="medium">Medium</option>
-                <option value="hard">Hard</option>
-                <option value="mixed" selected>Mixed</option>
-              </select>
-            </div>
-            <fieldset class="category-grid">
-              <legend>Categories</legend>
-              <label><input type="checkbox" value="makeup" checked> Makeup</label>
-              <label><input type="checkbox" value="logos_fashion" checked> Logos Fashion</label>
-              <label><input type="checkbox" value="accessories" checked> Accessories</label>
-              <label><input type="checkbox" value="skincare" checked> Skincare</label>
-              <label><input type="checkbox" value="nails" checked> Nails</label>
-              <label><input type="checkbox" value="logos_tech" checked> Logos Tech</label>
-              <label><input type="checkbox" value="wildcard" checked> Wildcard</label>
-            </fieldset>
-            <button id="start-game-btn" class="btn btn-primary wide" disabled>Start Game</button>
-          </div>
-
-          <p id="player2-waiting" class="player2-waiting hidden">Waiting for Player 1 to start the game...</p>
-        </div>
-      </div>
-    </section>
-
-    <section id="question-screen" class="screen question-screen">
-      <div class="question-layout">
-        <div class="score-bar glam-card compact">
-          <div id="p1-score" class="score-pill">P1 · 0</div>
-          <div class="versus">vs</div>
-          <div id="p2-score" class="score-pill">P2 · 0</div>
-        </div>
-
-        <div class="glam-card question-card">
-          <div class="meta-row">
-            <span id="category-badge" class="badge">category</span>
-            <span id="difficulty-badge" class="badge gold-badge">difficulty</span>
-            <span id="counter-badge" class="badge">Q 1 / 20</span>
-          </div>
-          <div class="timer-track" aria-label="Question timer">
-            <div id="timer-fill" class="timer-fill"></div>
-          </div>
-          <h2 id="question-text">Question text</h2>
-          <div id="answers-grid" class="answers-grid"></div>
-          <div class="status-row">
-            <span id="lock-status">Choose your answer.</span>
-            <span id="thinking-status">Opponent is thinking...</span>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section id="results-screen" class="screen results-screen">
-      <canvas id="confetti-canvas" class="confetti-canvas"></canvas>
-      <div class="glam-card results-card">
-        <p class="eyebrow">Final results</p>
-        <h2 id="winner-title">Winner 👑</h2>
-        <div class="final-scores">
-          <div id="final-p1" class="final-score-card"></div>
-          <div id="final-p2" class="final-score-card"></div>
-        </div>
-        <h3>Category breakdown</h3>
-        <div class="table-wrap">
-          <table id="category-table">
-            <thead>
-              <tr><th>Category</th><th>Player 1</th><th>Player 2</th></tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
-        <div class="button-row">
-          <button id="play-again-btn" class="btn btn-primary">Play again</button>
-          <button class="btn btn-secondary" data-home>New game</button>
-        </div>
-      </div>
-    </section>
-
-    <section id="hof-screen" class="screen hof-screen">
-      <div class="glam-card hof-card">
-        <button class="ghost-back" data-home>← Back</button>
-        <p class="eyebrow">Top 10</p>
-        <h2>Hall of Fame ✨</h2>
-        <div class="table-wrap">
-          <table id="hof-table">
-            <thead>
-              <tr><th>Rank</th><th>Player</th><th>Score</th><th>Difficulty</th><th>Date</th></tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-  </main>
-
-  <div id="disconnect-modal" class="modal hidden" role="dialog" aria-modal="true">
-    <div class="modal-card glam-card">
-      <h2 id="disconnect-title">Player disconnected</h2>
-      <p id="disconnect-text">Waiting 30 seconds to reconnect...</p>
-      <div class="modal-count" id="disconnect-count">30</div>
-      <button id="modal-home-btn" class="btn btn-secondary hidden">Back to home</button>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GlossQuiz ✦</title>
+    <meta
+      name="description"
+      content="GlossQuiz is a real-time 2-player glam trivia showdown."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Poppins:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <div class="sparkle-field" aria-hidden="true">
+      <span></span><span></span><span></span><span></span><span></span
+      ><span></span>
     </div>
-  </div>
 
-  <div id="toast" class="toast hidden"></div>
+    <main id="app" class="app-shell">
+      <section id="home-screen" class="screen active home-screen">
+        <div class="hero-card glam-card">
+          <p class="eyebrow">Real-time 2-player quiz</p>
+          <h1>GlossQuiz ✦</h1>
+          <p class="tagline">The ultimate glam trivia showdown</p>
+          <div class="button-row">
+            <button id="create-game-btn" class="btn btn-primary">
+              Create a game
+            </button>
+            <button id="hall-btn" class="btn btn-secondary">
+              Hall of Fame
+            </button>
+          </div>
+          <p id="home-error" class="soft-error hidden"></p>
+        </div>
+      </section>
 
-  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-  <script src="/app.js"></script>
-</body>
+      <section id="lobby-screen" class="screen lobby-screen">
+        <div class="glam-card lobby-card">
+          <button class="ghost-back" data-home>← Back</button>
+          <p class="eyebrow">Private room</p>
+          <h2>Get ready to glow ✦</h2>
+
+          <form id="name-form" class="name-form">
+            <label for="name-input">Enter your name</label>
+            <div class="inline-form">
+              <input
+                id="name-input"
+                type="text"
+                maxlength="24"
+                placeholder="e.g. Amine"
+                autocomplete="name"
+                required
+              />
+              <button class="btn btn-primary" type="submit">Join</button>
+            </div>
+          </form>
+
+          <div id="lobby-after-name" class="hidden">
+            <div class="share-box">
+              <p>Share this link with your player 2:</p>
+              <div class="copy-row">
+                <input id="share-link" readonly />
+                <button
+                  id="copy-link-btn"
+                  class="btn btn-secondary"
+                  type="button"
+                >
+                  Copy
+                </button>
+              </div>
+            </div>
+
+            <div id="waiting-card" class="waiting-card">
+              <div class="sparkle-loader"><i></i><i></i><i></i></div>
+              <p id="waiting-text">Waiting for opponent...</p>
+            </div>
+
+            <div id="host-options" class="host-options hidden">
+              <h3>Game options</h3>
+              <div class="field-group">
+                <label for="difficulty-select">Difficulty</label>
+                <select id="difficulty-select">
+                  <option value="easy">Easy</option>
+                  <option value="medium">Medium</option>
+                  <option value="hard">Hard</option>
+                  <option value="mixed" selected>Mixed</option>
+                </select>
+              </div>
+              <fieldset class="category-grid">
+                <legend>Categories</legend>
+                <label
+                  ><input type="checkbox" value="makeup" checked />
+                  Makeup</label
+                >
+                <label
+                  ><input type="checkbox" value="logos_fashion" checked /> Logos
+                  Fashion</label
+                >
+                <label
+                  ><input type="checkbox" value="accessories" checked />
+                  Accessories</label
+                >
+                <label
+                  ><input type="checkbox" value="skincare" checked />
+                  Skincare</label
+                >
+                <label
+                  ><input type="checkbox" value="nails" checked /> Nails</label
+                >
+                <label
+                  ><input type="checkbox" value="logos_tech" checked /> Logos
+                  Tech</label
+                >
+                <label
+                  ><input type="checkbox" value="wildcard" checked />
+                  Wildcard</label
+                >
+              </fieldset>
+              <button id="start-game-btn" class="btn btn-primary wide" disabled>
+                Start Game
+              </button>
+            </div>
+
+            <p id="player2-waiting" class="player2-waiting hidden">
+              Waiting for Player 1 to start the game...
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section id="question-screen" class="screen question-screen">
+        <div class="question-layout">
+          <div class="score-bar glam-card compact">
+            <div id="p1-score" class="score-pill">P1 · 0</div>
+            <div class="versus">vs</div>
+            <div id="p2-score" class="score-pill">P2 · 0</div>
+          </div>
+
+          <div class="glam-card question-card">
+            <div class="meta-row">
+              <span id="category-badge" class="badge">category</span>
+              <span id="difficulty-badge" class="badge gold-badge"
+                >difficulty</span
+              >
+              <span id="counter-badge" class="badge">Q 1 / 20</span>
+            </div>
+            <div class="timer-track" aria-label="Question timer">
+              <div id="timer-fill" class="timer-fill"></div>
+            </div>
+            <img
+              id="question-image"
+              class="question-image hidden"
+              alt="Quiz question image"
+            />
+            <h2 id="question-text">Question text</h2>
+            <div id="answers-grid" class="answers-grid"></div>
+            <div class="status-row">
+              <span id="lock-status">Choose your answer.</span>
+              <span id="thinking-status">Opponent is thinking...</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="results-screen" class="screen results-screen">
+        <canvas id="confetti-canvas" class="confetti-canvas"></canvas>
+        <div class="glam-card results-card">
+          <p class="eyebrow">Final results</p>
+          <h2 id="winner-title">Winner 👑</h2>
+          <div class="final-scores">
+            <div id="final-p1" class="final-score-card"></div>
+            <div id="final-p2" class="final-score-card"></div>
+          </div>
+          <h3>Category breakdown</h3>
+          <div class="table-wrap">
+            <table id="category-table">
+              <thead>
+                <tr>
+                  <th>Category</th>
+                  <th>Player 1</th>
+                  <th>Player 2</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div class="button-row">
+            <button id="play-again-btn" class="btn btn-primary">
+              Play again
+            </button>
+            <button class="btn btn-secondary" data-home>New game</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="hof-screen" class="screen hof-screen">
+        <div class="glam-card hof-card">
+          <button class="ghost-back" data-home>← Back</button>
+          <p class="eyebrow">Top 10</p>
+          <h2>Hall of Fame ✨</h2>
+          <div class="table-wrap">
+            <table id="hof-table">
+              <thead>
+                <tr>
+                  <th>Rank</th>
+                  <th>Player</th>
+                  <th>Score</th>
+                  <th>Difficulty</th>
+                  <th>Date</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div
+      id="disconnect-modal"
+      class="modal hidden"
+      role="dialog"
+      aria-modal="true"
+    >
+      <div class="modal-card glam-card">
+        <h2 id="disconnect-title">Player disconnected</h2>
+        <p id="disconnect-text">Waiting 30 seconds to reconnect...</p>
+        <div class="modal-count" id="disconnect-count">30</div>
+        <button id="modal-home-btn" class="btn btn-secondary hidden">
+          Back to home
+        </button>
+      </div>
+    </div>
+
+    <div id="toast" class="toast hidden"></div>
+
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script src="/app.js"></script>
+  </body>
 </html>
