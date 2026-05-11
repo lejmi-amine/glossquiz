@@ -1,5 +1,6 @@
 /* global io */
-const SOCKET_URL = window.GLOSSQUIZ_SOCKET_URL || window.location.origin;
+const SOCKET_URL =
+  window.GLOSSQUIZ_SOCKET_URL || "https://glossquiz-server.onrender.com";
 
 const CATEGORIES = [
   "makeup",

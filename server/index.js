@@ -32,9 +32,11 @@ const ALLOWED_ORIGINS = [
 
 function isOriginAllowed(origin) {
   if (!origin) return true;
-  return (
-    ALLOWED_ORIGINS.includes(origin) || process.env.ALLOW_ALL_ORIGINS === "true"
-  );
+  if (process.env.ALLOW_ALL_ORIGINS === "true") return true;
+  if (ALLOWED_ORIGINS.includes(origin)) return true;
+  if (/\.vercel\.app$/.test(origin)) return true;
+  if (/\.onrender\.com$/.test(origin)) return true;
+  return false;
 }
 
 const app = express();
