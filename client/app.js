@@ -307,6 +307,22 @@ function collectOptions() {
   };
 }
 
+const IMAGE_QUERIES = {
+  makeup: "makeup product",
+  logos_fashion: "fashion logo",
+  accessories: "fashion accessories",
+  skincare: "skincare product",
+  nails: "manicure nails",
+  logos_tech: "technology logo",
+  wildcard: "beauty product",
+};
+
+function getQuestionImageUrl(q) {
+  if (q.image) return q.image;
+  const query = IMAGE_QUERIES[q.category] || q.category || q.question;
+  return `https://source.unsplash.com/840x260/?${encodeURIComponent(query)}`;
+}
+
 function renderQuestion(q) {
   $("category-badge").textContent = q.category.replace("_", " ");
   $("difficulty-badge").textContent = q.difficulty;
@@ -317,17 +333,15 @@ function renderQuestion(q) {
 
   const questionImage = $("question-image");
   const questionText = $("question-text");
-  if (q.image) {
-    questionImage.src = q.image;
-    questionImage.alt = q.question || "Quiz question image";
-    questionImage.classList.remove("hidden");
-    questionText.classList.add("hidden");
-  } else {
-    questionImage.src = generateQuestionImageSrc(q.question);
-    questionImage.alt = q.question;
-    questionImage.classList.remove("hidden");
-    questionText.classList.add("hidden");
-  }
+  questionImage.src = getQuestionImageUrl(q);
+  questionImage.alt = q.question || "Quiz question image";
+  questionImage.classList.remove("hidden");
+  questionText.classList.add("hidden");
+  questionImage.onerror = () => {
+    questionImage.classList.add("hidden");
+    questionText.textContent = q.question;
+    questionText.classList.remove("hidden");
+  };
 
   const grid = $("answers-grid");
   grid.innerHTML = "";
